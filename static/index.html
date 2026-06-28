@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自测题目系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            margin-right: 0;
+            transition: margin-right 0.3s;
+        }
+        .main-content.sidebar-open {
+            margin-right: 320px;
+        }
+
+        /* 头部 */
+        .header {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .header h1 {
+            font-size: 22px;
+            margin-bottom: 12px;
+            color: #1a1a1a;
+        }
+
+        /* 统计栏 */
+        .stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+        }
+        .stat-item {
+            background: #f8f9fa;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .stat-item span {
+            font-weight: 600;
+            color: #4a90d9;
+        }
+
+        /* 上传区 */
+        .upload-area {
+            background: #fff;
+            border: 2px dashed #d0d0d0;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+        .upload-area:hover {
+            border-color: #4a90d9;
+            background: #f0f7ff;
+        }
+        .upload-area p { color: #888; margin-top: 8px; font-size: 14px; }
+
+        /* 本地解析按钮 */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #4a90d9;
+            color: #fff;
+        }
+        .btn-primary:hover { background: #3a7bc8; }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #555;
+        }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #4a90d9;
+            color: #4a90d9;
+        }
+        .btn-outline:hover { background: #f0f7ff; }
+
+        .action-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            align-items: center;
+        }
+
+        /* 题目卡片 */
+        .question-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            transition: all 0.2s;
+        }
+        .question-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .question-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .question-number {
+            background: #4a90d9;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .question-type {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #e8f4e8;
+            color: #2d7a2d;
+        }
+        .question-type.multiple { background: #fff3e0; color: #e65100; }
+        .question-type.true_false { background: #e3f2fd; color: #1565c0; }
+
+        .question-text {
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+
+        /* 选项 */
+        .options { display: flex; flex-direction: column; gap: 8px; }
+        .option-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: #fff;
+            font-size: 14px;
+            text-align: left;
+        }
+        .option-btn:hover:not(.disabled) {
+            border-color: #4a90d9;
+            background: #f0f7ff;
+        }
+        .option-btn.selected {
+            border-color: #4a90d9;
+            background: #e8f0fe;
+        }
+        .option-btn.correct {
+            border-color: #4caf50;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .option-btn.wrong {
+            border-color: #f44336;
+            background: #ffebee;
+            color: #c62828;
+        }
+        .option-btn.disabled {
+            cursor: default;
+            opacity: 0.85;
+        }
+
+        .option-letter {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .option-btn.correct .option-letter { background: #4caf50; color: #fff; }
+        .option-btn.wrong .option-letter { background: #f44336; color: #fff; }
+        .option-btn.selected .option-letter { background: #4a90d9; color: #fff; }
+
+        /* 多选确认按钮 */
+        .confirm-btn {
+            margin-top: 10px;
+            padding: 8px 20px;
+            background: #4a90d9;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: none;
+        }
+        .confirm-btn.show { display: inline-block; }
+        .confirm-btn:hover { background: #3a7bc8; }
+
+        /* 判断题选项 */
+        .tf-options { display: flex; gap: 12px; }
+        .tf-btn {
+            padding: 10px 32px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.15s;
+            background: #fff;
+        }
+        .tf-btn:hover:not(.disabled) { border-color: #4a90d9; background: #f0f7ff; }
+        .tf-btn.correct { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; }
+        .tf-btn.wrong { border-color: #f44336; background: #ffebee; color: #c62828; }
+        .tf-btn.disabled { cursor: default; opacity: 0.85; }
+
+        /* 错题侧边栏 */
+        .sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 320px;
+            height: 100vh;
+            background: #fff;
+            border-left: 1px solid #e0e0e0;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.08);
+        }
+        .sidebar.open { transform: translateX(0); }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 1;
+        }
+        .sidebar-header h2 { font-size: 16px; }
+        .sidebar-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .wrong-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .wrong-item:hover { background: #f8f9fa; }
+        .wrong-item-id {
+            font-size: 12px;
+            color: #f44336;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .wrong-item-text {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sidebar-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        /* 错题按钮 */
+        .sidebar-toggle {
+            position: fixed;
+            right: 16px;
+            bottom: 24px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #f44336;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(244,67,54,0.4);
+            z-index: 99;
+            transition: all 0.2s;
+        }
+        .sidebar-toggle:hover { transform: scale(1.1); }
+        .sidebar-toggle .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #333;
+            color: #fff;
+            font-size: 11px;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 加载/空状态 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .main-content.sidebar-open { margin-right: 0; }
+            .sidebar { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-content" id="mainContent">
+    <!-- 头部 -->
+    <div class="header">
+        <h1>自测题目系统</h1>
+        <div class="stats" id="stats" style="display:none;">
+            <div class="stat-item">总题数 <span id="totalCount">0</span></div>
+            <div class="stat-item">已答 <span id="answeredCount">0</span></div>
+            <div class="stat-item">正确 <span id="correctCount">0</span></div>
+            <div class="stat-item">正确率 <span id="accuracy">0%</span></div>
+        </div>
+        <div class="action-row">
+            <button class="btn btn-secondary" onclick="document.getElementById('pdfInput').click()">上传 PDF</button>
+            <button class="btn btn-outline" onclick="parseLocalPdf()">解析本地 PDF</button>
+            <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="uploadPdf(this)">
+        </div>
+    </div>
+
+    <!-- 上传区 -->
+    <div class="upload-area" id="uploadArea" onclick="document.getElementById('pdfInput').click()">
+        <div style="font-size:40px; color:#ccc;">📄</div>
+        <p>点击上传 PDF 文件，或点击"解析本地 PDF"直接解析项目目录中的文件</p>
+    </div>
+
+    <!-- 题目列表 -->
+    <div id="questionList"></div>
+</div>
+
+<!-- 错题侧边栏 -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h2>错题回顾</h2>
+        <button class="sidebar-close" onclick="toggleSidebar()">✕</button>
+    </div>
+    <div id="wrongList">
+        <div class="sidebar-empty">暂无错题</div>
+    </div>
+</div>
+
+<!-- 错题按钮 -->
+<button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" style="display:none;">
+    错题
+    <span class="badge" id="wrongBadge">0</span>
+</button>
+
+<script>
+    let questions = [];
+    let answeredMap = {};  // questionId -> { selected: [], correct: bool }
+    let wrongIds = [];
+
+    // === API 调用 ===
+
+    async function uploadPdf(input) {
+        if (!input.files.length) return;
+        const formData = new FormData();
+        formData.append('file', input.files[0]);
+
+        try {
+            const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+            const data = await resp.json();
+            if (!resp.ok) { alert(data.detail || '上传失败'); return; }
+            questions = data.questions;
+            renderAll();
+        } catch (e) {
+            alert('上传失败: ' + e.message);
+        }
+        input.value = '';
+    }
+
+    async function parseLocalPdf() {
+        try {
+            const resp = await fetch('/api/parse-local', { method: 'POST' });
+            const data = await resp.json();
+            if (!resp.ok) { alert(data.detail || '解析失败'); return; }
+            questions = data.questions;
+            renderAll();
+        } catch (e) {
+            alert('解析失败: ' + e.message);
+        }
+    }
+
+    // === 渲染 ===
+
+    function renderAll() {
+        document.getElementById('uploadArea').style.display = 'none';
+        document.getElementById('stats').style.display = 'flex';
+        document.getElementById('sidebarToggle').style.display = 'block';
+
+        loadProgress();
+        renderQuestions();
+        updateStats();
+        updateSidebar();
+    }
+
+    function renderQuestions() {
+        const list = document.getElementById('questionList');
+        list.innerHTML = questions.map((q, i) => renderQuestionCard(q, i)).join('');
+    }
+
+    function renderQuestionCard(q, index) {
+        const state = answeredMap[q.id];
+        const isAnswered = !!state;
+        const typeLabel = q.type === 'multiple' ? '多选' : q.type === 'true_false' ? '判断' : '单选';
+        const typeClass = q.type === 'multiple' ? 'multiple' : q.type === 'true_false' ? 'true_false' : '';
+
+        let optionsHtml = '';
+        if (q.type === 'true_false') {
+            optionsHtml = renderTfOptions(q, isAnswered, state);
+        } else {
+            optionsHtml = renderNormalOptions(q, isAnswered, state);
+        }
+
+        const showConfirm = q.type === 'multiple' && !isAnswered;
+
+        return `
+        <div class="question-card" id="q-${q.id}">
+            <div class="question-header">
+                <div class="question-number">${index + 1}</div>
+                <span class="question-type ${typeClass}">${typeLabel}</span>
+            </div>
+            <div class="question-text">${q.question}</div>
+            ${optionsHtml}
+            ${showConfirm ? `<button class="confirm-btn show" onclick="confirmMultiple(${q.id})">确认答案</button>` : ''}
+        </div>`;
+    }
+
+    function renderNormalOptions(q, isAnswered, state) {
+        if (!q.options) return '';
+        const entries = Object.entries(q.options);
+
+        return `<div class="options">${entries.map(([key, val]) => {
+            let cls = 'option-btn';
+            if (isAnswered) {
+                cls += ' disabled';
+                if (state.selected.includes(key) && q.answer.includes(key)) cls += ' correct';
+                else if (state.selected.includes(key) && !q.answer.includes(key)) cls += ' wrong';
+                else if (q.answer.includes(key)) cls += ' correct';
+            } else {
+                if (q.type === 'multiple') {
+                    cls += `" onclick="toggleMultipleOption(${q.id}, '${key}')`;
+                } else {
+                    cls += `" onclick="selectSingleOption(${q.id}, '${key}')`;
+                }
+            }
+            return `<div class="${cls}"><div class="option-letter">${key}</div><div>${val}</div></div>`;
+        }).join('')}</div>`;
+    }
+
+    function renderTfOptions(q, isAnswered, state) {
+        const opts = ['对', '错'];
+        return `<div class="tf-options">${opts.map(opt => {
+            let cls = 'tf-btn';
+            if (isAnswered) {
+                cls += ' disabled';
+                if (state.selected.includes(opt) && q.answer.includes(opt)) cls += ' correct';
+                else if (state.selected.includes(opt) && !q.answer.includes(opt)) cls += ' wrong';
+                else if (q.answer.includes(opt)) cls += ' correct';
+            } else {
+                cls += `" onclick="selectTfOption(${q.id}, '${opt}')`;
+            }
+            return `<button class="${cls}">${opt}</button>`;
+        }).join('')}</div>`;
+    }
+
+    // === 交互 ===
+
+    function selectSingleOption(qId, option) {
+        const q = questions.find(x => x.id === qId);
+        if (!q) return;
+
+        const correct = q.answer.includes(option);
+        answeredMap[qId] = { selected: [option], correct };
+
+        if (!correct) addToWrong(qId);
+
+        // 局部更新该题目
+        refreshQuestion(qId);
+        updateStats();
+        updateSidebar();
+        saveProgress();
+    }
+
+    function toggleMultipleOption(qId, option) {
+        const card = document.getElementById(`q-${qId}`);
+        const btns = card.querySelectorAll('.option-btn');
+        btns.forEach(btn => {
+            const letter = btn.querySelector('.option-letter').textContent;
+            if (letter === option) btn.classList.toggle('selected');
+        });
+    }
+
+    function confirmMultiple(qId) {
+        const q = questions.find(x => x.id === qId);
+        if (!q) return;
+
+        const card = document.getElementById(`q-${qId}`);
+        const selected = [];
+        card.querySelectorAll('.option-btn.selected').forEach(btn => {
+            selected.push(btn.querySelector('.option-letter').textContent);
+        });
+
+        if (selected.length === 0) { alert('请至少选择一个选项'); return; }
+
+        const correct = arraysEqual(selected.sort(), [...q.answer].sort());
+        answeredMap[qId] = { selected, correct };
+
+        if (!correct) addToWrong(qId);
+
+        refreshQuestion(qId);
+        updateStats();
+        updateSidebar();
+        saveProgress();
+    }
+
+    function selectTfOption(qId, option) {
+        const q = questions.find(x => x.id === qId);
+        if (!q) return;
+
+        const correct = q.answer.includes(option);
+        answeredMap[qId] = { selected: [option], correct };
+
+        if (!correct) addToWrong(qId);
+
+        refreshQuestion(qId);
+        updateStats();
+        updateSidebar();
+        saveProgress();
+    }
+
+    function refreshQuestion(qId) {
+        const index = questions.findIndex(x => x.id === qId);
+        if (index === -1) return;
+        const card = document.getElementById(`q-${qId}`);
+        card.outerHTML = renderQuestionCard(questions[index], index);
+    }
+
+    // === 错题管理 ===
+
+    function addToWrong(qId) {
+        if (!wrongIds.includes(qId)) wrongIds.push(qId);
+    }
+
+    function updateSidebar() {
+        const list = document.getElementById('wrongList');
+        const badge = document.getElementById('wrongBadge');
+        badge.textContent = wrongIds.length;
+
+        if (wrongIds.length === 0) {
+            list.innerHTML = '<div class="sidebar-empty">暂无错题</div>';
+            return;
+        }
+
+        list.innerHTML = wrongIds.map(id => {
+            const q = questions.find(x => x.id === id);
+            if (!q) return '';
+            return `
+            <div class="wrong-item" onclick="scrollToQuestion(${id})">
+                <div class="wrong-item-id">第 ${id} 题</div>
+                <div class="wrong-item-text">${q.question}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function scrollToQuestion(qId) {
+        const el = document.getElementById(`q-${qId}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const main = document.getElementById('mainContent');
+        sidebar.classList.toggle('open');
+        main.classList.toggle('sidebar-open');
+    }
+
+    // === 统计 ===
+
+    function updateStats() {
+        const total = questions.length;
+        const answered = Object.keys(answeredMap).length;
+        const correct = Object.values(answeredMap).filter(s => s.correct).length;
+        const acc = answered > 0 ? Math.round(correct / answered * 100) : 0;
+
+        document.getElementById('totalCount').textContent = total;
+        document.getElementById('answeredCount').textContent = answered;
+        document.getElementById('correctCount').textContent = correct;
+        document.getElementById('accuracy').textContent = acc + '%';
+    }
+
+    // === 持久化 ===
+
+    function saveProgress() {
+        localStorage.setItem('quiz_answered', JSON.stringify(answeredMap));
+        localStorage.setItem('quiz_wrong', JSON.stringify(wrongIds));
+    }
+
+    function loadProgress() {
+        try {
+            const saved = localStorage.getItem('quiz_answered');
+            const savedWrong = localStorage.getItem('quiz_wrong');
+            if (saved) answeredMap = JSON.parse(saved);
+            if (savedWrong) wrongIds = JSON.parse(savedWrong);
+        } catch (e) {
+            answeredMap = {};
+            wrongIds = [];
+        }
+    }
+
+    // === 工具 ===
+
+    function arraysEqual(a, b) {
+        return a.length === b.length && a.every((v, i) => v === b[i]);
+    }
+
+    // === 初始化：尝试加载已有题目 ===
+    (async function init() {
+        try {
+            const resp = await fetch('/api/questions');
+            const data = await resp.json();
+            if (data.count > 0) {
+                questions = data.questions;
+                renderAll();
+            }
+        } catch (e) { /* 忽略 */ }
+    })();
+</script>
+
+</body>
+</html>
