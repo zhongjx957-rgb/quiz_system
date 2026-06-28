@@ -283,8 +283,12 @@
             border-bottom: 1px solid #f0f0f0;
             cursor: pointer;
             transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .wrong-item:hover { background: #f8f9fa; }
+        .wrong-item-body { flex: 1; min-width: 0; }
         .wrong-item-id {
             font-size: 12px;
             color: #f44336;
@@ -299,6 +303,18 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        .wrong-item-del {
+            background: none;
+            border: none;
+            color: #bbb;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+            flex-shrink: 0;
+            transition: color 0.15s;
+        }
+        .wrong-item-del:hover { color: #f44336; }
 
         .sidebar-empty {
             padding: 40px 20px;
@@ -370,6 +386,7 @@
         <div class="action-row">
             <button class="btn btn-secondary" onclick="document.getElementById('pdfInput').click()">上传 PDF</button>
             <button class="btn btn-outline" onclick="parseLocalPdf()">解析本地 PDF</button>
+            <button class="btn btn-outline" id="resetBtn" style="display:none;" onclick="resetProgress()">重做全部</button>
             <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="uploadPdf(this)">
         </div>
     </div>
@@ -443,6 +460,7 @@
         document.getElementById('uploadArea').style.display = 'none';
         document.getElementById('stats').style.display = 'flex';
         document.getElementById('sidebarToggle').style.display = 'block';
+        document.getElementById('resetBtn').style.display = 'inline-block';
 
         loadProgress();
         renderQuestions();
@@ -613,8 +631,11 @@
             if (!q) return '';
             return `
             <div class="wrong-item" onclick="scrollToQuestion(${id})">
-                <div class="wrong-item-id">第 ${id} 题</div>
-                <div class="wrong-item-text">${q.question}</div>
+                <div class="wrong-item-body">
+                    <div class="wrong-item-id">第 ${id} 题</div>
+                    <div class="wrong-item-text">${q.question}</div>
+                </div>
+                <button class="wrong-item-del" onclick="event.stopPropagation(); removeWrong(${id})" title="删除">&times;</button>
             </div>`;
         }).join('');
     }
@@ -622,6 +643,12 @@
     function scrollToQuestion(qId) {
         const el = document.getElementById(`q-${qId}`);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function removeWrong(qId) {
+        wrongIds = wrongIds.filter(id => id !== qId);
+        saveProgress();
+        updateSidebar();
     }
 
     function toggleSidebar() {
@@ -650,6 +677,14 @@
     function saveProgress() {
         localStorage.setItem('quiz_answered', JSON.stringify(answeredMap));
         localStorage.setItem('quiz_wrong', JSON.stringify(wrongIds));
+    }
+
+    function resetProgress() {
+        if (!confirm('确定要清除所有答题记录，重新开始吗？\n（错题记录将保留）')) return;
+        answeredMap = {};
+        localStorage.removeItem('quiz_answered');
+        renderQuestions();
+        updateStats();
     }
 
     function loadProgress() {
